@@ -1,0 +1,81 @@
+# TaskFlow
+
+A full-stack task manager: **React (Vite)** frontend, **Express** REST API, **SQLite** storage
+(via Node's built-in `node:sqlite`, so there's no native module to compile).
+
+## Requirements
+
+Node.js 22.13+ (tested on Node 24).
+
+## Getting started
+
+```bash
+npm install        # installs backend + frontend (npm workspaces)
+npm run dev        # API on :3001 + Vite dev server on :5173 (hot reload)
+```
+
+Open http://localhost:5173. The database is created at `backend/data/taskflow.db` and seeded with sample data on first run.
+
+### Production
+
+```bash
+npm run build      # outputs frontend/dist/
+npm start          # Express serves the API and the built app on :3001
+```
+
+### Tests
+
+```bash
+npm test
+```
+
+## Features
+
+- Projects with colors and open-task counts; deleting a project deletes its tasks
+- Tasks with notes, due date, and priority (High / Medium / Low)
+- Active / Done / All filters, plus full-text search over title and notes
+- Dashboard stats: open, due today, overdue, % completed
+- Edit dialog, keyboard friendly (Enter to add, Esc to close)
+- Responsive layout with a slide-out sidebar on mobile, automatic dark mode
+
+## API
+
+| Method | Path | Body / query |
+| --- | --- | --- |
+| GET | `/api/projects` | — (includes `total` and `open` counts) |
+| POST | `/api/projects` | `{ name, color? }` |
+| PATCH | `/api/projects/:id` | `{ name?, color? }` |
+| DELETE | `/api/projects/:id` | — |
+| GET | `/api/tasks` | `?project=&status=active\|done&q=` |
+| POST | `/api/tasks` | `{ title, notes?, due_date?, priority?, project_id?, done? }` |
+| PATCH | `/api/tasks/:id` | any task field |
+| DELETE | `/api/tasks/:id` | — |
+| GET | `/api/stats` | `?today=YYYY-MM-DD` |
+
+Errors come back as `{ "error": "message" }` with a 4xx/5xx status.
+
+## Project layout
+
+```
+backend/                Express API (own package.json)
+  index.js              entry point (also serves frontend/dist in production)
+  app.js                routes + validation
+  db.js                 schema + seed data
+  app.test.js           API tests (node:test)
+  data/                 SQLite database (created on first run)
+frontend/               React app (own package.json)
+  index.html
+  vite.config.js        dev server; proxies /api to the backend
+  src/
+    App.jsx             UI components
+    api.js              fetch wrapper
+    styles.css          styles (light + dark)
+package.json            root: runs both with one command
+```
+
+You can also work on one side at a time from the root:
+
+```bash
+npm run dev -w backend     # API only, on :3001
+npm run dev -w frontend    # UI only, on :5173 (needs the API running)
+```
